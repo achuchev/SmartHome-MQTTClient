@@ -1,0 +1,17 @@
+{
+    "name": "MQTTClient",
+    "keywords": "mqtt, iot",
+    "description": "MQTTClient",
+    "repository": {
+        "type": "",
+        "url": ""
+    },
+    "version": "0.1",
+    "exclude": "tests",
+    "examples": "examples/*/*.ino",
+    "frameworks": "arduino",
+    "platforms": [
+        "atmelavr",
+        "espressif"
+    ]
+}
