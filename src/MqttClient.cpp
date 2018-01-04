@@ -2,7 +2,7 @@
 #include <PubSubClient.h>
 #include <ESP8266WiFi.h>
 #include "MqttClient.h"
-#include "Common.h"
+#include "CommonConfig.h"
 #include "RemotePrint.h"
 
 MqttClient::MqttClient() {
