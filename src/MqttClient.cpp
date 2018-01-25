@@ -142,8 +142,8 @@ void MqttClient::publish(String topic, String msg) {
 }
 
 void MqttClient::subscribe(const char *topic) {
-  PRINT("MQTT: Subscribed to [");
+  PRINT("MQTT: Subscribed to '");
   PRINT(topic);
-  PRINT("]: ");
+  PRINTLN("'.");
   pubSubClient.subscribe(topic);
 }
