@@ -36,8 +36,6 @@ public:
 private:
 
   WiFiClientSecure wifiClientSSL;
-
-  // WiFiClient wifiClientPlain;
   PubSubClient pubSubClient;
   const char *serverAddress;
   uint16_t serverPort;
