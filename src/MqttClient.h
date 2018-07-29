@@ -30,7 +30,7 @@ public:
 
   void publish(String topic,
                String msg,
-               bool   retained);
+               bool   retained = true);
   void subscribe(const char *topic);
   void loop();
 

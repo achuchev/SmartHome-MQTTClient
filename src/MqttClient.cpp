@@ -122,7 +122,7 @@ void MqttClient::verifyServer() {
   }
 }
 
-void MqttClient::publish(String topic, String msg, bool retained = true) {
+void MqttClient::publish(String topic, String msg, bool retained) {
   PRINT("MQTT: Publish message [");
   PRINT(topic);
   PRINT("]: ");
