@@ -29,7 +29,8 @@ public:
              std::function<void(char *, uint8_t *, unsigned int)>callback);
 
   void publish(String topic,
-               String msg);
+               String msg,
+               bool   retained);
   void subscribe(const char *topic);
   void loop();
 

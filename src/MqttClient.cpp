@@ -122,7 +122,7 @@ void MqttClient::verifyServer() {
   }
 }
 
-void MqttClient::publish(String topic, String msg) {
+void MqttClient::publish(String topic, String msg, bool retained = true) {
   PRINT("MQTT: Publish message [");
   PRINT(topic);
   PRINT("]: ");
@@ -130,7 +130,7 @@ void MqttClient::publish(String topic, String msg) {
   bool success = pubSubClient.publish(topic.c_str(),
                                       msg.c_str(),
                                       (uint8_t)1,
-                                      false);
+                                      retained);
 
   if (!success) {
     PRINT("MQTT: Unable to publish to topic [");
