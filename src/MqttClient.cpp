@@ -84,7 +84,7 @@ void MqttClient::reconnect() {
       lastMqttConnectedMillis = millis();
 
       // Once connected, resubscribe to all topics
-      for (int i = 0; i < this->topicsCount; i++) {
+      for (unsigned int i = 0; i < this->topicsCount; i++) {
         this->subscribe(this->topics[i].c_str());
       }
     } else {
