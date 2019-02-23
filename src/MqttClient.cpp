@@ -12,6 +12,21 @@ MqttClient::MqttClient() {
   this->deviceName     = NULL;
 }
 
+void MqttClient::setTLSOptions(const char *serverFingerprint) {
+  PRINT("MQTT: SSL options set to ");
+
+  if ((serverFingerprint == NULL) || (strcmp(serverFingerprint, "") == 0)) {
+    // Don’t verify any X509 certificates
+    this->wifiClientSSL.setInsecure();
+    PRINTLN("INSECURE connection.");
+  } else {
+    this->wifiClientSSL.setFingerprint(serverFingerprint);
+    PRINT("Fingerprint '");
+    PRINT(serverFingerprint);
+    PRINTLN("'.");
+  }
+}
+
 MqttClient::MqttClient(const char *serverAddress,
                        uint16_t serverPort,
                        const char *deviceName,
@@ -22,6 +37,7 @@ MqttClient::MqttClient(const char *serverAddress,
                        std::function<void(char *, uint8_t *,
                                           unsigned int)>callback)
 {
+  this->setTLSOptions(serverFingerprint);
   this->serverAddress  = serverAddress;
   this->serverPort     = serverPort;
   this->serverUsername = serverUsername;
@@ -31,7 +47,7 @@ MqttClient::MqttClient(const char *serverAddress,
   this->deviceName     = deviceName;
 
   this->pubSubClient.setServer(serverAddress, serverPort);
-  this->pubSubClient.setClient(wifiClientSSL);
+  this->pubSubClient.setClient(this->wifiClientSSL);
   this->pubSubClient.setCallback(callback);
 }
 
@@ -46,6 +62,7 @@ MqttClient::MqttClient(const char *serverAddress,
                        std::function<void(char *, uint8_t *,
                                           unsigned int)>callback)
 {
+  this->setTLSOptions(serverFingerprint);
   this->serverAddress  = serverAddress;
   this->serverPort     = serverPort;
   this->serverUsername = serverUsername;
@@ -56,19 +73,21 @@ MqttClient::MqttClient(const char *serverAddress,
   this->deviceName  = deviceName;
 
   this->pubSubClient.setServer(serverAddress, serverPort);
-  this->pubSubClient.setClient(wifiClientSSL);
+  this->pubSubClient.setClient(this->wifiClientSSL);
   this->pubSubClient.setCallback(callback);
 }
 
 void MqttClient::reconnect() {
-  // Loop until we're reconnected
-  while (!pubSubClient.connected()) {
+  if (!pubSubClient.connected() && ((millis() - lastFailedConnectionAttempt) >= 5 * 1000)) {
+    // while (!pubSubClient.connected()) { // Loop until we're reconnected
     // Use clean session if the connection is lost for more than 10 sec
     bool useCleanSession = lastMqttConnectedMillis == 0 ||
                            (millis() - lastMqttConnectedMillis) > 10 * 1000;
 
     PRINT("MQTT: Attempting connection to ");
     PRINT(serverAddress);
+    PRINT(":");
+    PRINT(serverPort);
 
     if (useCleanSession) {
       PRINTLN(". Clean session is used.");
@@ -77,21 +96,40 @@ void MqttClient::reconnect() {
     }
     PRINT("MQTT: Connection to ");
     PRINT(serverAddress);
+    PRINT(":");
+    PRINT(serverPort);
 
     if (pubSubClient.connect(deviceName, serverUsername, serverPassword,
                              useCleanSession)) {
       PRINTLN(" is successful.");
-      lastMqttConnectedMillis = millis();
+      lastMqttConnectedMillis     = millis();
+      lastFailedConnectionAttempt = 0;
 
       // Once connected, resubscribe to all topics
       for (unsigned int i = 0; i < this->topicsCount; i++) {
         this->subscribe(this->topics[i].c_str());
       }
     } else {
-      PRINT(" failed, rc=");
+      char  *sslErrorDesc    = NULL;
+      size_t sslErrorDescLen = 0;
+      int    sslErrorCode    = this->wifiClientSSL.getLastSSLError(sslErrorDesc, sslErrorDescLen);
+
+      // Convert the description to string
+      char sslErrorDescC[sslErrorDescLen + 1];
+      memcpy(sslErrorDescC, sslErrorDesc, sslErrorDescLen);
+      sslErrorDescC[sslErrorDescLen] = '\0';
+      String sslErrorDescStr = String(sslErrorDescC);
+
+      PRINT(" failed, MQTT rc: ");
       PRINT(pubSubClient.state());
-      PRINTLN(" try again in 5 seconds.");
-      delay(5000);
+      PRINT(" , SSL rc: ");
+      PRINT(sslErrorCode);
+      PRINT(", error: ");
+      PRINT(sslErrorDescStr);
+      PRINTLN(". Next attempt in 5 seconds.");
+
+      // delay(5000);
+      lastFailedConnectionAttempt = millis();
     }
   }
 }
@@ -101,25 +139,6 @@ void MqttClient::loop() {
     reconnect();
   }
   pubSubClient.loop();
-}
-
-void MqttClient::verifyServer() {
-  WiFiClientSecure wifiClientSSL;
-
-  // Use WiFiClientSecure class to create TLS connection
-  PRINT("MQTT: Connecting to ");
-  PRINTLN(serverAddress);
-
-  if (!wifiClientSSL.connect(serverAddress, serverPort)) {
-    PRINTLN("connection failed");
-    return;
-  }
-
-  if (wifiClientSSL.verify(serverFingerprint, serverAddress)) {
-    PRINTLN("certificate matches");
-  } else {
-    PRINTLN("certificate doesn't match");
-  }
 }
 
 void MqttClient::publish(String topic, String msg, bool retained) {

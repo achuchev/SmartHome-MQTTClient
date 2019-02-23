@@ -33,6 +33,7 @@ public:
                bool   retained = true);
   void subscribe(const char *topic);
   void loop();
+  void setTLSOptions(const char *serverFingerprint);
 
 private:
 
@@ -46,8 +47,8 @@ private:
   String *topics;
   size_t topicsCount;
   const char *deviceName;
-  unsigned long lastMqttConnectedMillis = 0;
+  unsigned long lastMqttConnectedMillis     = 0;
+  unsigned long lastFailedConnectionAttempt = 0;
   void reconnect();
-  void verifyServer();
 };
 #endif // ifndef MQTT_CLIENT_H
